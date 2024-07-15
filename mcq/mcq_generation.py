@@ -14,6 +14,8 @@ import json
 from questions import questions
 
 # Define your desired data structure for MCQs.
+
+
 class MCQ(BaseModel):
     question: str = Field(description="The text of the question")
     options: list = Field(
@@ -118,5 +120,5 @@ def completion(prompt, topic, defficulty_level, number_of_questions, parser):
     return response
 
 
-def mcq_generation(defficulty_level, topic, number_of_questions=10):
+def mcq_generation(difficulty_level, topic, number_of_questions=10):
     return questions
