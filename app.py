@@ -1,8 +1,11 @@
-import streamlit as st
-from questions import questions
-from mcq.mcq_generation import mcq_generation
+# import streamlit as st
+# from questions import questions
+# from mcq.mcq_generation import mcq_generation
 
 # Inject custom CSS for better styling
+from mcq.mcq_generation import mcq_generation
+from questions import questions
+import streamlit as st
 st.markdown(
     """
     <style>
@@ -38,6 +41,7 @@ st.markdown(
         font-weight: bold;
         color: #4CAF50;
         margin-bottom: 20px;
+        text-align: center;
     }
     .stats {
         font-size: 18px;
@@ -47,6 +51,7 @@ st.markdown(
         font-size: 18px;
         font-weight: bold;
         margin-bottom: 10px;
+        text-align: center;
     }
     /* Custom CSS for radio buttons */
     .stRadio > div {
@@ -69,95 +74,56 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Initialize session state variables
-if 'quiz_started' not in st.session_state:
+
+def initialize_state():
+    if 'quiz_started' not in st.session_state:
+        st.session_state.quiz_started = False
+    if 'question_index' not in st.session_state:
+        st.session_state.question_index = 0
+    if 'correct_answers' not in st.session_state:
+        st.session_state.correct_answers = 0
+    if 'incorrect_answers' not in st.session_state:
+        st.session_state.incorrect_answers = 0
+    if 'user_answers' not in st.session_state:
+        st.session_state.user_answers = []
+
+
+initialize_state()
+
+
+def state_variables():
     st.session_state.quiz_started = False
-if 'question_index' not in st.session_state:
-    st.session_state.question_index = 0
-if 'correct_answers' not in st.session_state:
-    st.session_state.correct_answers = 0
-if 'incorrect_answers' not in st.session_state:
-    st.session_state.incorrect_answers = 0
-if 'user_answers' not in st.session_state:
-    st.session_state.user_answers = []
-
-# Function to start quiz
-
-
-def start_quiz():
-    st.session_state.quiz_started = True
     st.session_state.question_index = 0
     st.session_state.correct_answers = 0
     st.session_state.incorrect_answers = 0
     st.session_state.user_answers = []
-    st.session_state.questions = mcq_generation(
-        topic=st.session_state.topic,
-        defficulty_level=st.session_state.difficulty_level
-    )
-    st.rerun()
 
-# Function to reset quiz state
+
+def reset_state():
+    state_variables()
+    st.session_state.questions = []
+    st.experimental_rerun()
 
 
 def retake():
+    state_variables()
     st.session_state.quiz_started = True
-    st.session_state.question_index = 0
-    st.session_state.correct_answers = 0
-    st.session_state.incorrect_answers = 0
-    st.session_state.user_answers = []
-    st.rerun()
-    pass
-
-
-def reset_quiz():
-    st.session_state.quiz_started = False
-    st.session_state.question_index = 0
-    st.session_state.correct_answers = 0
-    st.session_state.incorrect_answers = 0
-    st.session_state.user_answers = []
     st.rerun()
 
 
-# Display topic and difficulty level selection if quiz has not started
-if not st.session_state.quiz_started:
-    st.title("Interview Preparation Application")
-
-    st.session_state.topic = st.selectbox(
-        "Select a topic to prepare for interview",
-        options=['Deep Learning', 'Data Science',
-                 'Machine Learning', 'Generative AI']
+def start_quiz():
+    state_variables()
+    st.session_state.quiz_started = True
+    st.session_state.questions = mcq_generation(
+        topic=st.session_state.topic,
+        difficulty_level=st.session_state.difficulty_level
     )
-    st.session_state.difficulty_level = st.selectbox(
-        "Select your difficulty level",
-        options=['Easy', 'Intermediate', 'Advanced']
-    )
-
-    # Display instructions
-    st.header("Instructions")
-    st.markdown(
-        "Select an option to begin the quiz. After selecting an option, questions will be displayed one by one."
-    )
-
-    # Display start quiz button
-    if st.button("Start Quiz"):
-        start_quiz()
-
-# Display the progress bar and question index
-if st.session_state.quiz_started:
-    total_questions = len(questions)
-    progress = (st.session_state.question_index) / total_questions
-    st.progress(progress)
-    st.write(
-        f"Question {st.session_state.question_index} of {total_questions}")
-
-# Function to check the user's answer and update the state
+    st.experimental_rerun()
 
 
 def check_answer():
     selected_option = st.session_state.selected_option
-    current_question = questions[st.session_state.question_index]
-
-    # Track the question, selected option, and the correct option
+    current_question = st.session_state.questions[st.session_state.question_index]
     correct_option = next(
         option['text'] for option in current_question['options'] if option['isCorrect'])
     st.session_state.user_answers.append({
@@ -165,66 +131,69 @@ def check_answer():
         'selected_option': selected_option,
         'correct_option': correct_option
     })
-
     if correct_option == selected_option:
         st.session_state.correct_answers += 1
     else:
         st.session_state.incorrect_answers += 1
-
-    # Move to the next question
     st.session_state.question_index += 1
-    # Rerun the app to display the next question
-    st.rerun()
-
-# Display the current question
+    st.experimental_rerun()
 
 
-def show_next_question():
-    if st.session_state.question_index < len(questions):
-        current_question = questions[st.session_state.question_index]
-
-        st.markdown(
-            f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
-
-        options = [option['text'] for option in current_question['options']]
-        st.radio("Choose an option:", options,
-                 key='selected_option', label_visibility='hidden')
-
-        if st.button("Submit"):
-            check_answer()
-
-    else:
-        st.markdown(
-            '<div class="completion-message">Quiz completed!</div>', unsafe_allow_html=True)
-        stats_col1, stats_col2 = st.columns(2)
-        with stats_col1:
-            st.markdown('<div class="stat-box"><div class="stat-header">Correct Answers</div><div class="stat-value">{}</div></div>'.format(
-                st.session_state.correct_answers), unsafe_allow_html=True)
-        with stats_col2:
-            st.markdown('<div class="stat-box"><div class="stat-header">Incorrect Answers</div><div class="stat-value">{}</div></div>'.format(
-                st.session_state.incorrect_answers), unsafe_allow_html=True)
-
-        # Display the summary of all questions and answers
-        st.markdown(
-            '<div class="summary-header">Summary of your answers:</div>', unsafe_allow_html=True)
-        for answer in st.session_state.user_answers:
-            st.write(f"**Question:** {answer['question']}")
-            if answer['selected_option'] == answer['correct_option']:
-                st.success(f"**Your answer:** {answer['selected_option']}")
-            else:
-                st.success(f"**Correct answer:** {answer['correct_option']}")
-                st.error(f"**Your answer:** {answer['selected_option']}")
-            st.write("---")
-
-        # Add buttons for retaking the quiz and going to the home screen
-        if st.button("Retake Quiz"):
-            retake()
-        if st.button("Go to Home Screen"):
-            reset_quiz()
+def show_question():
+    current_question = st.session_state.questions[st.session_state.question_index]
+    st.markdown(
+        f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
+    options = [option['text'] for option in current_question['options']]
+    st.radio("Choose an option:", options,
+             key='selected_option', label_visibility='hidden')
+    if st.button("Submit"):
+        check_answer()
 
 
-# Display questions if quiz has started
-if st.session_state.quiz_started:
-    show_next_question()
+def display_summary():
+    st.markdown(
+        '<div class="completion-message">Quiz completed!</div>', unsafe_allow_html=True)
+    stats_col1, stats_col2 = st.columns(2)
+    with stats_col1:
+        st.markdown('<div class="stat-box"><div class="stat-header">Correct Answers</div><div class="stat-value">{}</div></div>'.format(
+            st.session_state.correct_answers), unsafe_allow_html=True)
+    with stats_col2:
+        st.markdown('<div class="stat-box"><div class="stat-header">Incorrect Answers</div><div class="stat-value">{}</div></div>'.format(
+            st.session_state.incorrect_answers), unsafe_allow_html=True)
+
+    # Display the summary of all questions and answers
+    st.markdown(
+        '<div class="summary-header">Summary of your answers:</div>', unsafe_allow_html=True)
+    for answer in st.session_state.user_answers:
+        st.write(f"**Question:** {answer['question']}")
+        if answer['selected_option'] == answer['correct_option']:
+            st.success(f"**Your answer:** {answer['selected_option']}")
+        else:
+            st.success(f"**Correct answer:** {answer['correct_option']}")
+            st.error(f"**Your answer:** {answer['selected_option']}")
+        st.write("---")
+    if st.button("Retake Quiz"):
+        retake()
+    if st.button("Go to Home Screen"):
+        reset_state()
+
+
+if not st.session_state.quiz_started:
+    st.title("Interview Preparation Application")
+    st.session_state.topic = st.selectbox("Select a topic", [
+                                          'Deep Learning', 'Data Science', 'Machine Learning', 'Generative AI'])
+    st.session_state.difficulty_level = st.selectbox(
+        "Select difficulty level", ['Easy', 'Intermediate', 'Advanced'])
+    if st.button("Start Quiz"):
+        start_quiz()
 else:
-    st.header("Multiple Choice Questions")
+    total_questions = len(st.session_state.questions)
+    progress = st.session_state.question_index / total_questions
+    st.progress(progress)
+    st.write(
+        f"Question {st.session_state.question_index + 1} of {total_questions}")
+
+    if st.session_state.question_index < total_questions:
+        show_question()
+    else:
+        display_summary()
