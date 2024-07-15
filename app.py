@@ -184,10 +184,12 @@ def show_next_question():
         for answer in st.session_state.user_answers:
             st.write(f"**Question:** {answer['question']}")
             if answer['selected_option'] == answer['correct_option']:
-                st.success(f"**Your answer:** {answer['selected_option']}")
+                st.success(
+                    f"**Your answer:** {answer['selected_option']}", icon=":material/thumb_up:")
             else:
                 st.success(f"**Correct answer:** {answer['correct_option']}")
-                st.error(f"**Your answer:** {answer['selected_option']}")
+                st.error(
+                    f"**Your answer:** {answer['selected_option']}", icon="☹")
             st.write("---")
 
 
