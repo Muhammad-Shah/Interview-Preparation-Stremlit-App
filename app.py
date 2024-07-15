@@ -1,11 +1,8 @@
-# import streamlit as st
-# from questions import questions
-# from mcq.mcq_generation import mcq_generation
-
-# Inject custom CSS for better styling
 from mcq.mcq_generation import mcq_generation, generate
-from questions import questions
 import streamlit as st
+API = st.secrets["GROQ_API"]
+# API = st.secrets["GOOGLE_API"]
+
 st.markdown(
     """
     <style>
@@ -117,7 +114,8 @@ def start_quiz():
     st.session_state.questions = generate(
         topic=st.session_state.topic,
         level=st.session_state.difficulty_level,
-        number_of_questions=st.session_state.num_questions
+        number_of_questions=st.session_state.num_questions,
+        API=API
     )
     st.rerun()
 

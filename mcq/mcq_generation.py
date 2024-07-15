@@ -1,6 +1,5 @@
-import os
-from dotenv import load_dotenv
-import streamlit as st
+# import os
+# from dotenv import load_dotenv
 from langchain_groq.chat_models import ChatGroq
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -11,14 +10,12 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 import json
-from questions import questions
 import random
 
-dotenv_path = 'env'
-load_dotenv(dotenv_path)
-GOOGLE_API = os.getenv('G_API')
-GROQ_API = os.getenv('GROQ_API')
-# GOOGLE_API = st.secrets["G_API"]
+# dotenv_path = 'env'
+# load_dotenv(dotenv_path)
+# GOOGLE_API = os.getenv('G_API')
+# API = os.getenv('API')
 
 # And a query intended to prompt a language model to populate the data structure.
 
@@ -40,7 +37,7 @@ class MCQ(BaseModel):
 #                          google_api_key=GOOGLE_API)
 
 
-def chat_model(temperature):
+def chat_model(temperature, GROQ_API):
     return ChatGroq(temperature=temperature,
                     model_name="Llama3-70b-8192",
                     api_key=GROQ_API,
@@ -53,7 +50,7 @@ def chat_model(temperature):
                     )
 
 
-def generate(level, topic, number_of_questions=10):
+def generate(level, topic, number_of_questions, API):
     generation_system_message_content = '''You are an expert in generating diverse and high-quality Multiple Choice Questions (MCQs) for interview preparation. 
     Your vast and comprehensive knowledge allows you to cover a wide range of topics without repetition. 
     You provide clear, concise, and relevant questions that are appropriately challenging based on the specified difficulty level. 
@@ -87,13 +84,13 @@ def generate(level, topic, number_of_questions=10):
     parser = JsonOutputParser(pydantic_object=MCQ)
 
     response = completion(prompt_template, level, topic,
-                          number_of_questions, parser)
+                          number_of_questions, parser, API)
     return response
 
 
-def completion(prompt, topic, defficulty_level, number_of_questions, parser):
+def completion(prompt, topic, defficulty_level, number_of_questions, parser, API):
     temp = random.uniform(0.1, 1)
-    llm = chat_model(temp)
+    llm = chat_model(temp, API)
     llm_chain = prompt | llm | parser
 
     # Construct the parameters dictionary
