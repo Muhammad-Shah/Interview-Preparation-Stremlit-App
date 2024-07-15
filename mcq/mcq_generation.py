@@ -6,20 +6,19 @@ from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from pprint import pprint
 from langchain_core.output_parsers import JsonOutputParser
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 import json
 from questions import questions
+import random
 
-# Define your desired data structure for MCQs.
-
-
-class MCQ(BaseModel):
-    question: str = Field(description="The text of the question")
-    options: list = Field(
-        description="List of answer options with correctness indicated")
+dotenv_path = 'env'
+load_dotenv(dotenv_path)
+GOOGLE_API = os.getenv('G_API')
+GROQ_API = os.getenv('GROQ_API')
+# GOOGLE_API = st.secrets["G_API"]
 
 # And a query intended to prompt a language model to populate the data structure.
 
@@ -29,17 +28,13 @@ class Option(BaseModel):
     isCorrect: bool = Field(
         description="Indicator if the option is correct or not")
 
+# Define your desired data structure for MCQs.
+
 
 class MCQ(BaseModel):
     question: str = Field(description="The statement of the question")
     options: list[Option] = Field(
         description="List of answer options with correctness indicated")
-
-
-dotenv_path = 'env'
-load_dotenv(dotenv_path)
-GOOGLE_API = os.getenv('G_API')
-# GOOGLE_API = st.secrets["G_API"]
 
 # llm = GoogleGenerativeAI(model="models/text-bison-001",
 #                          google_api_key=GOOGLE_API)
@@ -58,7 +53,7 @@ def chat_model(temperature):
                     )
 
 
-def generate(level, topic, number_of_questions):
+def generate(level, topic, number_of_questions=10):
     generation_system_message_content = '''You are an expert in generating diverse and high-quality Multiple Choice Questions (MCQs) for interview preparation. 
     Your vast and comprehensive knowledge allows you to cover a wide range of topics without repetition. 
     You provide clear, concise, and relevant questions that are appropriately challenging based on the specified difficulty level. 
@@ -98,7 +93,6 @@ def generate(level, topic, number_of_questions):
 
 def completion(prompt, topic, defficulty_level, number_of_questions, parser):
     temp = random.uniform(0.1, 1)
-    print(temp)
     llm = chat_model(temp)
     llm_chain = prompt | llm | parser
 
