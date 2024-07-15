@@ -142,7 +142,14 @@ def show_question():
     current_question = st.session_state.questions[st.session_state.question_index]
     st.markdown(
         f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
-    options = [option['text'] for option in current_question['options']]
+    # Ensure all options have 'text' key
+    options = [option['text']
+               for option in current_question['options'] if 'text' in option]
+
+    if not options:
+        st.error("Invalid question format. No valid options available.")
+        st.rerun()
+        # return
     st.radio("Choose an option:", options,
              key='selected_option', label_visibility='hidden')
     if st.button("Submit"):
