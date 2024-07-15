@@ -180,7 +180,7 @@ def show_next_question():
 
         # Display the summary of all questions and answers
         st.markdown(
-            '<div class="summary-header">Summary of your answers:</div><br>', unsafe_allow_html=True)
+            '<br><div class="summary-header">Summary of your answers:</div><br>', unsafe_allow_html=True)
         for answer in st.session_state.user_answers:
             st.write(f"**Question:** {answer['question']}")
             if answer['selected_option'] == answer['correct_option']:
