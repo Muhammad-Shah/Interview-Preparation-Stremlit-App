@@ -57,11 +57,11 @@ st.markdown(
         flex-direction: column;
     }
     .stRadio label {
-    background-color: #071952; /* Change this to your desired color */
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    margin-bottom: 0.5rem;
-    width: 100%;
+        background-color: #071952; /* Change this to your desired color */
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        width: 100%;
     }
     </style>
     """,
@@ -89,7 +89,7 @@ def start_quiz():
     st.session_state.correct_answers = 0
     st.session_state.incorrect_answers = 0
     st.session_state.user_answers = []
-    st.rerun()
+    st.experimental_rerun()
 
 
 # Display topic and difficulty level selection if quiz has not started
@@ -105,8 +105,9 @@ if not st.session_state.quiz_started:
         "Select your difficulty level",
         options=['Easy', 'Intermediate', 'Advanced']
     )
-    st.header("Multiple Choice Questions")
+
     # Display instructions
+    st.header("Instructions")
     st.markdown(
         "Select an option to begin the quiz. After selecting an option, questions will be displayed one by one."
     )
@@ -114,6 +115,14 @@ if not st.session_state.quiz_started:
     # Display start quiz button
     if st.button("Start Quiz"):
         start_quiz()
+
+# Display the progress bar and question index
+if st.session_state.quiz_started:
+    total_questions = len(questions)
+    progress = (st.session_state.question_index) / total_questions
+    st.progress(progress)
+    st.write(
+        f"Question {st.session_state.question_index} of {total_questions}")
 
 # Function to check the user's answer and update the state
 
@@ -139,7 +148,7 @@ def check_answer():
     # Move to the next question
     st.session_state.question_index += 1
     # Rerun the app to display the next question
-    st.rerun()
+    st.experimental_rerun()
 
 # Display the current question
 
@@ -158,23 +167,20 @@ def show_next_question():
         if st.button("Submit"):
             check_answer()
 
-        # Display progress
-        progress = (st.session_state.question_index + 1) / len(questions)
-        st.progress(progress)
-        st.write(
-            f"Question {st.session_state.question_index + 1} of {len(questions)}")
-
     else:
         st.markdown(
             '<div class="completion-message">Quiz completed!</div>', unsafe_allow_html=True)
-        st.markdown(
-            f'<div class="stats">Correct answers: {st.session_state.correct_answers}</div>', unsafe_allow_html=True)
-        st.markdown(
-            f'<div class="stats">Incorrect answers: {st.session_state.incorrect_answers}</div>', unsafe_allow_html=True)
+        stats_col1, stats_col2 = st.columns(2)
+        with stats_col1:
+            st.markdown('<div class="stat-box"><div class="stat-header">Correct Answers</div><div class="stat-value">{}</div></div>'.format(
+                st.session_state.correct_answers), unsafe_allow_html=True)
+        with stats_col2:
+            st.markdown('<div class="stat-box"><div class="stat-header">Incorrect Answers</div><div class="stat-value">{}</div></div>'.format(
+                st.session_state.incorrect_answers), unsafe_allow_html=True)
 
         # Display the summary of all questions and answers
         st.markdown(
-            '<div class="summary-header">Summary of your answers:</div>', unsafe_allow_html=True)
+            '<div class="summary-header">Summary of your answers:</div><br>', unsafe_allow_html=True)
         for answer in st.session_state.user_answers:
             st.write(f"**Question:** {answer['question']}")
             if answer['selected_option'] == answer['correct_option']:
@@ -188,4 +194,5 @@ def show_next_question():
 # Display questions if quiz has started
 if st.session_state.quiz_started:
     show_next_question()
-    
+else:
+    st.header("Multiple Choice Questions")
