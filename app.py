@@ -3,7 +3,7 @@
 # from mcq.mcq_generation import mcq_generation
 
 # Inject custom CSS for better styling
-from mcq.mcq_generation import mcq_generation
+from mcq.mcq_generation import mcq_generation, generate
 from questions import questions
 import streamlit as st
 st.markdown(
@@ -102,7 +102,7 @@ def state_variables():
 def reset_state():
     state_variables()
     st.session_state.questions = []
-    st.experimental_rerun()
+    st.rerun()
 
 
 def retake():
@@ -114,11 +114,12 @@ def retake():
 def start_quiz():
     state_variables()
     st.session_state.quiz_started = True
-    st.session_state.questions = mcq_generation(
+    st.session_state.questions = generate(
         topic=st.session_state.topic,
-        difficulty_level=st.session_state.difficulty_level
+        level=st.session_state.difficulty_level,
+        number_of_questions=st.session_state.num_questions
     )
-    st.experimental_rerun()
+    st.rerun()
 
 
 def check_answer():
@@ -136,7 +137,7 @@ def check_answer():
     else:
         st.session_state.incorrect_answers += 1
     st.session_state.question_index += 1
-    st.experimental_rerun()
+    st.rerun()
 
 
 def show_question():
@@ -184,6 +185,8 @@ if not st.session_state.quiz_started:
                                           'Deep Learning', 'Data Science', 'Machine Learning', 'Generative AI'])
     st.session_state.difficulty_level = st.selectbox(
         "Select difficulty level", ['Easy', 'Intermediate', 'Advanced'])
+    st.session_state.num_questions = st.number_input(
+        "Select number of questions", min_value=5, max_value=30, value=10, step=5)
     if st.button("Start Quiz"):
         start_quiz()
 else:
@@ -191,7 +194,7 @@ else:
     progress = st.session_state.question_index / total_questions
     st.progress(progress)
     st.write(
-        f"Question {st.session_state.question_index + 1} of {total_questions}")
+        f"Question {st.session_state.question_index} of {total_questions}")
 
     if st.session_state.question_index < total_questions:
         show_question()
