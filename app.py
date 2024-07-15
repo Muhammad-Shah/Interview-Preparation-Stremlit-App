@@ -1,7 +1,72 @@
 import streamlit as st
 from questions import questions
 
-st.title("Interview Preparation Application")
+# Inject custom CSS for better styling
+st.markdown(
+    """
+    <style>
+    .question-text {
+        font-size: 18px;
+        font-weight: bold;
+        padding: 10px;
+        margin-bottom: 10px;
+        background-color: #4C3BCF;
+        border-radius: 5px;
+    }
+    .answer-text {
+        font-size: 16px;
+        padding: 8px;
+        margin-bottom: 5px;
+        border-radius: 5px;
+    }
+    .correct-answer {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    .incorrect-answer {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    .summary {
+        border-top: 1px solid #e0e0e0;
+        padding-top: 10px;
+        margin-top: 20px;
+    }
+    .completion-message {
+        font-size: 20px;
+        font-weight: bold;
+        color: #4CAF50;
+        margin-bottom: 20px;
+    }
+    .stats {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+    .summary-header {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    /* Custom CSS for radio buttons */
+    .stRadio > div {
+        padding: 10px;
+        font-size: 18px;
+    }
+    .stRadio div[role='radiogroup'] {
+        display: flex;
+        flex-direction: column;
+    }
+    .stRadio label {
+    background-color: #071952; /* Change this to your desired color */
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    width: 100%;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Initialize session state variables
 if 'quiz_started' not in st.session_state:
@@ -12,6 +77,8 @@ if 'correct_answers' not in st.session_state:
     st.session_state.correct_answers = 0
 if 'incorrect_answers' not in st.session_state:
     st.session_state.incorrect_answers = 0
+if 'user_answers' not in st.session_state:
+    st.session_state.user_answers = []
 
 # Function to start quiz
 
@@ -21,11 +88,14 @@ def start_quiz():
     st.session_state.question_index = 0
     st.session_state.correct_answers = 0
     st.session_state.incorrect_answers = 0
+    st.session_state.user_answers = []
     st.rerun()
 
 
 # Display topic and difficulty level selection if quiz has not started
 if not st.session_state.quiz_started:
+    st.title("Interview Preparation Application")
+
     st.session_state.topic = st.selectbox(
         "Select a topic to prepare for interview",
         options=['Deep Learning', 'Data Science',
@@ -35,11 +105,11 @@ if not st.session_state.quiz_started:
         "Select your difficulty level",
         options=['Easy', 'Intermediate', 'Advanced']
     )
-
+    st.header("Multiple Choice Questions")
     # Display instructions
-    st.header("Instructions")
     st.markdown(
-        "Select an option to begin the quiz. After selecting an option, questions will be displayed one by one.")
+        "Select an option to begin the quiz. After selecting an option, questions will be displayed one by one."
+    )
 
     # Display start quiz button
     if st.button("Start Quiz"):
@@ -51,15 +121,20 @@ if not st.session_state.quiz_started:
 def check_answer():
     selected_option = st.session_state.selected_option
     current_question = questions[st.session_state.question_index]
-    for option in current_question['options']:
-        if option['text'] == selected_option:
-            if option['isCorrect']:
-                st.session_state.correct_answers += 1
-                st.success("Correct!")
-            else:
-                st.session_state.incorrect_answers += 1
-                st.error("Incorrect!")
-            break
+
+    # Track the question, selected option, and the correct option
+    correct_option = next(
+        option['text'] for option in current_question['options'] if option['isCorrect'])
+    st.session_state.user_answers.append({
+        'question': current_question['question'],
+        'selected_option': selected_option,
+        'correct_option': correct_option
+    })
+
+    if correct_option == selected_option:
+        st.session_state.correct_answers += 1
+    else:
+        st.session_state.incorrect_answers += 1
 
     # Move to the next question
     st.session_state.question_index += 1
@@ -72,20 +147,45 @@ def check_answer():
 def show_next_question():
     if st.session_state.question_index < len(questions):
         current_question = questions[st.session_state.question_index]
-        st.write(current_question['question'])
+
+        st.markdown(
+            f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
 
         options = [option['text'] for option in current_question['options']]
-        st.radio("Choose an option:", options, key='selected_option')
+        st.radio("Choose an option:", options,
+                 key='selected_option', label_visibility='hidden')
 
         if st.button("Submit"):
             check_answer()
+
+        # Display progress
+        progress = (st.session_state.question_index + 1) / len(questions)
+        st.progress(progress)
+        st.write(
+            f"Question {st.session_state.question_index + 1} of {len(questions)}")
+
     else:
-        st.write("Quiz completed!")
-        st.write(f"Correct answers: {st.session_state.correct_answers}")
-        st.write(f"Incorrect answers: {st.session_state.incorrect_answers}")
+        st.markdown(
+            '<div class="completion-message">Quiz completed!</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="stats">Correct answers: {st.session_state.correct_answers}</div>', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="stats">Incorrect answers: {st.session_state.incorrect_answers}</div>', unsafe_allow_html=True)
+
+        # Display the summary of all questions and answers
+        st.markdown(
+            '<div class="summary-header">Summary of your answers:</div>', unsafe_allow_html=True)
+        for answer in st.session_state.user_answers:
+            st.write(f"**Question:** {answer['question']}")
+            if answer['selected_option'] == answer['correct_option']:
+                st.success(f"**Your answer:** {answer['selected_option']}")
+            else:
+                st.success(f"**Correct answer:** {answer['correct_option']}")
+                st.error(f"**Your answer:** {answer['selected_option']}")
+            st.write("---")
 
 
 # Display questions if quiz has started
 if st.session_state.quiz_started:
-    st.header("Multiple Choice Questions")
     show_next_question()
+    
