@@ -117,6 +117,7 @@ def start_quiz():
         number_of_questions=st.session_state.num_questions,
         API=GROQ_API
     )
+    print(st.session_state.questions)
     st.rerun()
 
 
