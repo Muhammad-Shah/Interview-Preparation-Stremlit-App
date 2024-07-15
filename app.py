@@ -1,6 +1,6 @@
 from mcq.mcq_generation import mcq_generation, generate
 import streamlit as st
-API = st.secrets["GROQ_API"]
+GROQ_API = st.secrets["GROQ_API"]
 # API = st.secrets["GOOGLE_API"]
 
 st.markdown(
@@ -115,7 +115,7 @@ def start_quiz():
         topic=st.session_state.topic,
         level=st.session_state.difficulty_level,
         number_of_questions=st.session_state.num_questions,
-        API=API
+        API=GROQ_API
     )
     st.rerun()
 
