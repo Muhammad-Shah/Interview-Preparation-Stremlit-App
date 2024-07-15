@@ -11,10 +11,9 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.pydantic_v1 import BaseModel, Field
 import json
+from questions import questions
 
 # Define your desired data structure for MCQs.
-
-
 class MCQ(BaseModel):
     question: str = Field(description="The text of the question")
     options: list = Field(
@@ -38,7 +37,7 @@ class MCQ(BaseModel):
 dotenv_path = 'env'
 load_dotenv(dotenv_path)
 GOOGLE_API = os.getenv('G_API')
-GOOGLE_API = st.secrets["G_API"]
+# GOOGLE_API = st.secrets["G_API"]
 
 # llm = GoogleGenerativeAI(model="models/text-bison-001",
 #                          google_api_key=GOOGLE_API)
@@ -90,7 +89,8 @@ def generate(level, topic, number_of_questions):
 
     parser = JsonOutputParser(pydantic_object=MCQ)
 
-    response = completion(prompt_template, level, topic, number_of_questions, parser)
+    response = completion(prompt_template, level, topic,
+                          number_of_questions, parser)
     return response
 
 
@@ -107,13 +107,16 @@ def completion(prompt, topic, defficulty_level, number_of_questions, parser):
     # }
 
     parameters = {
-        'level':defficulty_level,
-        'topic':topic,
-        'number_of_questions':number_of_questions,
-        'format_instructions':parser.get_format_instructions()
+        'level': defficulty_level,
+        'topic': topic,
+        'number_of_questions': number_of_questions,
+        'format_instructions': parser.get_format_instructions()
     }
-    
 
     # Remove None values from parameters
     response = llm_chain.invoke(parameters)
     return response
+
+
+def mcq_generation(defficulty_level, topic, number_of_questions=10):
+    return questions

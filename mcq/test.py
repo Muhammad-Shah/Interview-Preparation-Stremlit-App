@@ -1,5 +1,4 @@
 import streamlit as st
-from questions import questions
 from mcq.mcq_generation import mcq_generation
 
 # Inject custom CSS for better styling
@@ -80,6 +79,8 @@ if 'incorrect_answers' not in st.session_state:
     st.session_state.incorrect_answers = 0
 if 'user_answers' not in st.session_state:
     st.session_state.user_answers = []
+if 'questions' not in st.session_state:
+    st.session_state.questions = []
 
 # Function to start quiz
 
@@ -94,19 +95,9 @@ def start_quiz():
         topic=st.session_state.topic,
         defficulty_level=st.session_state.difficulty_level
     )
-    st.rerun()
+    st.experimental_rerun()
 
 # Function to reset quiz state
-
-
-def retake():
-    st.session_state.quiz_started = True
-    st.session_state.question_index = 0
-    st.session_state.correct_answers = 0
-    st.session_state.incorrect_answers = 0
-    st.session_state.user_answers = []
-    st.rerun()
-    pass
 
 
 def reset_quiz():
@@ -115,7 +106,7 @@ def reset_quiz():
     st.session_state.correct_answers = 0
     st.session_state.incorrect_answers = 0
     st.session_state.user_answers = []
-    st.rerun()
+    st.experimental_rerun()
 
 
 # Display topic and difficulty level selection if quiz has not started
@@ -135,8 +126,7 @@ if not st.session_state.quiz_started:
     # Display instructions
     st.header("Instructions")
     st.markdown(
-        "Select an option to begin the quiz. After selecting an option, questions will be displayed one by one."
-    )
+        "Select an option to begin the quiz. After selecting an option, questions will be displayed one by one.")
 
     # Display start quiz button
     if st.button("Start Quiz"):
@@ -144,18 +134,18 @@ if not st.session_state.quiz_started:
 
 # Display the progress bar and question index
 if st.session_state.quiz_started:
-    total_questions = len(questions)
+    total_questions = len(st.session_state.questions)
     progress = (st.session_state.question_index) / total_questions
     st.progress(progress)
     st.write(
-        f"Question {st.session_state.question_index} of {total_questions}")
+        f"Question {st.session_state.question_index + 1} of {total_questions}")
 
 # Function to check the user's answer and update the state
 
 
 def check_answer():
     selected_option = st.session_state.selected_option
-    current_question = questions[st.session_state.question_index]
+    current_question = st.session_state.questions[st.session_state.question_index]
 
     # Track the question, selected option, and the correct option
     correct_option = next(
@@ -174,14 +164,14 @@ def check_answer():
     # Move to the next question
     st.session_state.question_index += 1
     # Rerun the app to display the next question
-    st.rerun()
+    st.experimental_rerun()
 
 # Display the current question
 
 
 def show_next_question():
-    if st.session_state.question_index < len(questions):
-        current_question = questions[st.session_state.question_index]
+    if st.session_state.question_index < len(st.session_state.questions):
+        current_question = st.session_state.questions[st.session_state.question_index]
 
         st.markdown(
             f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
@@ -218,7 +208,7 @@ def show_next_question():
 
         # Add buttons for retaking the quiz and going to the home screen
         if st.button("Retake Quiz"):
-            retake()
+            start_quiz()
         if st.button("Go to Home Screen"):
             reset_quiz()
 
