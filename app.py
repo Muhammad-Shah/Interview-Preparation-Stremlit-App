@@ -65,7 +65,7 @@ st.markdown(
         flex-direction: column;
     }
     .stRadio label {
-        background-color: #071952; /* Change this to your desired color */
+        background-color: #433D8B; /* Change this to your desired color */
         padding: 0.5rem;
         border-radius: 0.5rem;
         margin-bottom: 0.5rem;
@@ -148,7 +148,7 @@ def show_question():
     st.markdown(
         f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
     # Ensure all options have 'text' key and add color formatting
-    options = [f':red[{option["text"]}]' if 'text' in option else ''
+    options = [f':#f0efe6[{option["text"]}]' if 'text' in option else ''
                for option in current_question['options']]
 
     if not options:
