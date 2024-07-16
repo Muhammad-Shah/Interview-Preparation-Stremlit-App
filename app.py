@@ -1,5 +1,10 @@
 from mcq.mcq_generation import mcq_generation, generate
 import streamlit as st
+# from dotenv import load_dotenv
+# import os
+# dotenv_path = 'env'
+# load_dotenv(dotenv_path)
+# GROQ_API = os.getenv('GROQ_API')
 GROQ_API = st.secrets["GROQ_API"]
 # API = st.secrets["GOOGLE_API"]
 
@@ -65,6 +70,7 @@ st.markdown(
         border-radius: 0.5rem;
         margin-bottom: 0.5rem;
         width: 100%;
+        color: #ffffff;
     }
     </style>
     """,
@@ -117,7 +123,6 @@ def start_quiz():
         number_of_questions=st.session_state.num_questions,
         API=GROQ_API
     )
-    print(st.session_state.questions)
     st.rerun()
 
 
