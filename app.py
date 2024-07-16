@@ -148,7 +148,7 @@ def show_question():
     st.markdown(
         f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
     # Ensure all options have 'text' key and add color formatting
-    options = [f':white[{option["text"]}]' if 'text' in option else ''
+    options = [f':red[{option["text"]}]' if 'text' in option else ''
                for option in current_question['options']]
 
     if not options:
