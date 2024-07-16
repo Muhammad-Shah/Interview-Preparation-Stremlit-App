@@ -3,7 +3,7 @@
 This bot will prepare you for interview by generating MCQs and provide feedback.
 
 ## How to Use
-1. Fork the repo: `git clone https://github.com/Muhammad-Shah/Interview-Preparation-Stremlit-App.git`
+1. Clone the repo: `git clone https://github.com/Muhammad-Shah/Interview-Preparation-Stremlit-App.git`
 2. Install dependencies `pip install -r requirements.txt`
 3. create `.env` file in the root of the folder and put `GROQ_API = 'Your API KEY'`
 4. Open `app.py` at the top uncomment 
