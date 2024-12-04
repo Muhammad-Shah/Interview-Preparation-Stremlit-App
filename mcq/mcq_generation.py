@@ -39,14 +39,9 @@ class MCQ(BaseModel):
 
 def chat_model(temperature, GROQ_API):
     return ChatGroq(temperature=temperature,
-                    model_name="Llama3-70b-8192",
+                    model_name="mixtral-8x7b-32768",
                     api_key=GROQ_API,
                     max_tokens=1000,
-                    model_kwargs={
-                        "top_p": 1,
-                        "frequency_penalty": 0.5,
-                        "presence_penalty": 0.5
-                    }
                     )
 
 
