@@ -1,110 +1,77 @@
-# import os
-# from dotenv import load_dotenv
-from langchain_groq.chat_models import ChatGroq
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
-from pprint import pprint
 from langchain_core.output_parsers import JsonOutputParser
 from langchain.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import PromptTemplate
-from langchain_core.pydantic_v1 import BaseModel, Field
-import json
+from pydantic import BaseModel, Field
+from pprint import pprint
 import random
-
-# dotenv_path = 'env'
-# load_dotenv(dotenv_path)
-# GOOGLE_API = os.getenv('G_API')
-# API = os.getenv('API')
-
-# And a query intended to prompt a language model to populate the data structure.
-
 
 class Option(BaseModel):
     text: str = Field(description="The text of the option")
-    isCorrect: bool = Field(
-        description="Indicator if the option is correct or not")
-
-# Define your desired data structure for MCQs.
-
+    isCorrect: bool = Field(description="Indicator if the option is correct or not")
 
 class MCQ(BaseModel):
     question: str = Field(description="The statement of the question")
-    options: list[Option] = Field(
-        description="List of answer options with correctness indicated")
+    options: list[Option] = Field(description="List of answer options with correctness indicated")
 
-# llm = GoogleGenerativeAI(model="models/text-bison-001",
-#                          google_api_key=GOOGLE_API)
+class MCQGenerator:
+    def __init__(self, api_key: str):
+        self.api_key = api_key
 
+    def chat_model(self, temperature: float):
+        return GoogleGenerativeAI(
+            model="gemini-2.0-flash-exp",
+            api_key=self.api_key,
+            temperature=temperature,
+            max_tokens=8000,
+        )
 
-def chat_model(temperature, GROQ_API):
-    return ChatGroq(temperature=temperature,
-                    model_name="mixtral-8x7b-32768",
-                    api_key=GROQ_API,
-                    max_tokens=1000,
-                    )
+    def generate(self, level: str, topic: str, number_of_questions: int):
+        generation_system_message_content = '''You are an expert in generating diverse and high-quality Multiple Choice Questions (MCQs) for interview preparation. 
+        Your vast and comprehensive knowledge allows you to cover a wide range of topics without repetition. 
+        You provide clear, concise, and relevant questions that are appropriately challenging based on the specified difficulty level. 
+        Ensure that the questions are varied and never repeat the same question twice. Always return the response strictly in JSON format.\n\n'''
 
+        human_message_content = '''
+        **Generate Multiple Choice Questions (MCQs)**
 
-def generate(level, topic, number_of_questions, API):
-    generation_system_message_content = '''You are an expert in generating diverse and high-quality Multiple Choice Questions (MCQs) for interview preparation. 
-    Your vast and comprehensive knowledge allows you to cover a wide range of topics without repetition. 
-    You provide clear, concise, and relevant questions that are appropriately challenging based on the specified difficulty level. 
-    Ensure that the questions are varied and never repeat the same question twice. Always return the response strictly in JSON format.\n\n'''
+        **Topic:** {topic}
 
-    human_message_content = '''
-    **Generate Multiple Choice Questions (MCQs)**
+        **Difficulty Level:** {level}
 
-    **Topic:** {topic}
+        **Number of questions:** {number_of_questions}
 
-    **Difficulty Level:** {level}
+        **Instructions:** Generate {number_of_questions} multiple-choice questions (MCQ) on the topic of {topic} at the specified difficulty level. 
+                        The questions should have four options, with one correct answer and three distractors. 
+                        Ensure the questions are clear, concise, and relevant to the Topic. 
+                        Return the MCQ in JSON format with the following structure:
+                      
+        ]
 
-    **Number of questions:** {number_of_questions}
+        {format_instructions}
+        '''
 
-    **Instructions:** Generate {number_of_questions} multiple-choice questions (MCQ) on the topic of {topic} at the specified difficulty level. 
-                    The questions should have four options, with one correct answer and three distractors. 
-                    Ensure the questions are clear, concise, and relevant to the Topic. 
-                    Return the MCQ in JSON format with the following structure:
-                  
-    ]
+        prompt_template = ChatPromptTemplate.from_messages([
+            SystemMessage(content=generation_system_message_content),
+            HumanMessagePromptTemplate.from_template(human_message_content)
+        ])
 
-    {format_instructions}
-    '''
+        parser = JsonOutputParser(pydantic_object=MCQ)
 
-    # Construct the prompt
-    prompt_template = ChatPromptTemplate.from_messages([
-        SystemMessage(content=generation_system_message_content),
-        HumanMessagePromptTemplate.from_template(human_message_content)
-    ])
+        return self._completion(prompt_template, level, topic, number_of_questions, parser)
 
-    parser = JsonOutputParser(pydantic_object=MCQ)
+    def _completion(self, prompt, level, topic, number_of_questions, parser):
+        temp = random.uniform(0.1, 1)
+        llm = self.chat_model(temp)
+        llm_chain = prompt | llm | parser
 
-    response = completion(prompt_template, level, topic,
-                          number_of_questions, parser, API)
-    return response
+        parameters = {
+            'level': level,
+            'topic': topic,
+            'number_of_questions': number_of_questions,
+            'format_instructions': parser.get_format_instructions()
+        }
 
-
-def completion(prompt, topic, defficulty_level, number_of_questions, parser, API):
-    temp = random.uniform(0.1, 1)
-    llm = chat_model(temp, API)
-    llm_chain = prompt | llm | parser
-
-    # Construct the parameters dictionary
-    # parameters = {
-    #     "query": prompt,
-    #     # Add more parameters as needed
-    # }
-
-    parameters = {
-        'level': defficulty_level,
-        'topic': topic,
-        'number_of_questions': number_of_questions,
-        'format_instructions': parser.get_format_instructions()
-    }
-
-    # Remove None values from parameters
-    response = llm_chain.invoke(parameters)
-    return response
-
-
-def mcq_generation(difficulty_level, topic, number_of_questions=10):
-    return questions
+        response = llm_chain.invoke(parameters)
+        pprint(response)
+        return response

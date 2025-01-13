@@ -1,12 +1,14 @@
-from mcq.mcq_generation import mcq_generation, generate
+from mcq.mcq_generation import MCQGenerator
 import streamlit as st
-# from dotenv import load_dotenv
-# import os
-# dotenv_path = 'env'
-# load_dotenv(dotenv_path)
+from dotenv import load_dotenv
+import os
+load_dotenv()
 # GROQ_API = os.getenv('GROQ_API')
-GROQ_API = st.secrets["GROQ_API"]
-# API = st.secrets["GOOGLE_API"]
+# GOOGLE_API = os.getenv('GOOGLE_API')
+# GROQ_API = st.secrets["GROQ_API"]
+GOOGLE_API = st.secrets["GOOGLE_API"]
+
+mcq_generator = MCQGenerator(GOOGLE_API)
 
 st.markdown(
     """
@@ -116,11 +118,10 @@ def retake():
 def start_quiz():
     state_variables()
     st.session_state.quiz_started = True
-    st.session_state.questions = generate(
+    st.session_state.questions = mcq_generator.generate(
         topic=st.session_state.topic,
         level=st.session_state.difficulty_level,
         number_of_questions=st.session_state.num_questions,
-        API=GROQ_API
     )
     st.rerun()
 
@@ -147,14 +148,13 @@ def show_question():
     current_question = st.session_state.questions[st.session_state.question_index]
     st.markdown(
         f'<div class="question-text">{current_question["question"]}</div>', unsafe_allow_html=True)
-    # Ensure all options have 'text' key and add color formatting
-    options = [f':white[{option["text"]}]' if 'text' in option else ''
-               for option in current_question['options']]
+    # Get options without the :white[] wrapper
+    options = [option["text"] for option in current_question['options']]
 
     if not options:
         st.error("Invalid question format. No valid options available.")
         st.rerun()
-        # return
+    
     st.radio("Choose an option:", options,
              key='selected_option', label_visibility='hidden')
     if st.button("Submit"):
